@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K-nacci Solar · Argira Station</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e0f;
+    --surface: #111618;
+    --border: #1e2a2e;
+    --accent: #c8a96e;
+    --accent2: #4ecdc4;
+    --accent3: #e8624a;
+    --text: #d4cfc8;
+    --text-muted: #6b7a7d;
+    --panel-color: #1a3a5c;
+    --panel-stroke: #2a6aac;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 20%, rgba(200,169,110,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(78,205,196,0.04) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .logo span { color: var(--accent); }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-top: 8px;
+  }
+
+  /* Layout */
+  .grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* Panel cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 28px;
+  }
+
+  .card-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Slider */
+  .param-row {
+    margin-bottom: 24px;
+  }
+
+  .param-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .param-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .param-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    transition: transform 0.15s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+  }
+
+  /* Mode buttons */
+  .mode-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .btn {
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 1px;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+  /* Stats box */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .stat {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 14px;
+    border-radius: 1px;
+  }
+
+  .stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .stat-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--accent2);
+  }
+
+  .stat-val.warn { color: var(--accent3); }
+
+  /* Sequence display */
+  .seq-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-top: 16px;
+    word-break: break-all;
+  }
+
+  .seq-display span { color: var(--accent); }
+
+  /* Canvas area */
+  .canvas-wrap {
+    position: relative;
+  }
+
+  .canvas-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    background: transparent;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  canvas {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-top: none;
+    background: var(--surface);
+    cursor: crosshair;
+  }
+
+  /* Formula box */
+  .formula-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 16px 20px;
+    margin-top: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    line-height: 2;
+    color: var(--text-muted);
+  }
+
+  .formula-box strong { color: var(--accent); }
+  .formula-box .phi { color: var(--accent2); }
+
+  /* Efficiency bar */
+  .eff-bar-wrap {
+    margin-top: 16px;
+  }
+
+  .eff-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .eff-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .eff-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .eff-fill.knacci { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .eff-fill.grid { background: var(--text-muted); }
+
+  footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  footer span { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="logo"><span>Argira</span> Station · K-nacci Lab</div>
+      <h1>Secuencias <em>k-nacci</em><br>& Energía Solar</h1>
+      <div class="subtitle">// Disposición óptima de paneles · Biomímesis generalizada</div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- LEFT: Controls -->
+    <div>
+      <div class="card">
+        <div class="card-title">Parámetros</div>
+
+        <div class="param-row">
+          <div class="param-label">
+            <span class="param-name">Orden k</span>
+            <span class="param-value" id="kVal">2</span>
+          </div>
+          <input type="range" id="kSlider" min="2" max="10" value="2" step="1">
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)">Fibonacci</span>
+            <span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text-muted)">k=10</span>
+          </div>
+        </div>
+
+        <div class="param-row">
+          <div class="param-label">
+            <span class="param-name">N paneles</span>
+            <span class="param-value" id="nVal">200</span>
+          </div>
+          <input type="range" id="nSlider" min="20" max="500" value="200" step="10">
+        </div>
+
+        <div class="param-row">
+          <div class="param-label">
+            <span class="param-name">Radio panel (px)</span>
+            <span class="param-value" id="rVal">6</span>
+          </div>
+          <input type="range" id="rSlider" min="2" max="12" value="6" step="1">
+        </div>
+
+        <div class="card-title" style="margin-top:8px">Disposición</div>
+        <div class="mode-btns">
+          <button class="btn active" id="btnKnacci" onclick="setMode('knacci')">K-nacci</button>
+          <button class="btn" id="btnGrid" onclick="setMode('grid')">Cuadrícula</button>
+          <button class="btn" id="btnHex" onclick="setMode('hex')">Hexagonal</button>
+          <button class="btn" id="btnRand" onclick="setMode('rand')">Aleatoria</button>
+        </div>
+
+        <div class="card-title">Constante φₖ</div>
+        <div class="stat-val" id="phiVal" style="font-size:28px;margin-bottom:4px">1.6180</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted)">Ángulo k-nacci</div>
+        <div class="stat-val" id="angleVal" style="font-size:22px;margin-top:4px">137.508°</div>
+
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">Eficiencia</div>
+            <div class="stat-val" id="effVal">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Solapamiento</div>
+            <div class="stat-val warn" id="overlapVal">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Cobertura</div>
+            <div class="stat-val" id="coverVal">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Mín. distancia</div>
+            <div class="stat-val" id="minDistVal">—</div>
+          </div>
+        </div>
+
+        <div class="eff-bar-wrap" style="margin-top:20px">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);margin-bottom:8px">COMPARATIVA DE EFICIENCIA</div>
+          <div class="eff-bar-label"><span>K-nacci (actual)</span><span id="effPct1">—</span></div>
+          <div class="eff-bar"><div class="eff-fill knacci" id="bar1" style="width:0%"></div></div>
+          <div class="eff-bar-label"><span>Cuadrícula ref.</span><span id="effPct2">—</span></div>
+          <div class="eff-bar"><div class="eff-fill grid" id="bar2" style="width:0%"></div></div>
+        </div>
+
+        <div class="seq-display" id="seqDisplay">
+          Secuencia: —
+        </div>
+
+      </div>
+
+      <div class="formula-box" style="margin-top:16px">
+        <strong>Recurrencia:</strong> F<sub>k</sub>(n) = Σ F<sub>k</sub>(n−i), i=1..k<br>
+        <strong>Constante:</strong> <span class="phi">φₖ</span> = lím F(n+1)/F(n)<br>
+        <strong>Ángulo:</strong> α = 360° / φₖ²<br>
+        <strong>Posición:</strong> r = c√n · (cos nα, sin nα)
+      </div>
+    </div>
+
+    <!-- RIGHT: Canvas -->
+    <div class="canvas-wrap">
+      <div class="canvas-tabs">
+        <button class="tab active" onclick="setTab('solar')">☀ Paneles Solares</button>
+        <button class="tab" onclick="setTab('sequence')">∿ Secuencia</button>
+        <button class="tab" onclick="setTab('spiral')">🌀 Espiral Pura</button>
+      </div>
+      <canvas id="mainCanvas" height="560"></canvas>
+    </div>
+
+  </div>
+
+  <footer>
+    <div>Argira Station · K-nacci Solar Visualizer v1.0</div>
+    <div>DOI: <span>10.xxxx/knacci-paper</span> · 2024</div>
+  </footer>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let k = 2, N = 200, R = 6;
+let mode = 'knacci';
+let currentTab = 'solar';
+let animFrame = null;
+
+// ── K-nacci math ───────────────────────────────────────────────────────────
+function knacciSequence(k, len) {
+  let seq = Array(k).fill(1);
+  for (let i = k; i < len; i++) {
+    let s = 0;
+    for (let j = 1; j <= k; j++) s += seq[i - j];
+    seq.push(s);
+  }
+  return seq;
+}
+
+function computePhi(k) {
+  const seq = knacciSequence(k, 60);
+  return seq[59] / seq[58];
+}
+
+function knacciAngle(k) {
+  const phi = computePhi(k);
+  return 360 / (phi * phi);
+}
+
+// ── Canvas setup ───────────────────────────────────────────────────────────
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = 560;
+}
+
+// ── Point generators ───────────────────────────────────────────────────────
+function generateKnacci(n, N, angle, cx, cy, maxR) {
+  const pts = [];
+  const c = maxR / Math.sqrt(N + 1) * 0.95;
+  for (let i = 1; i <= n; i++) {
+    const r = c * Math.sqrt(i);
+    const theta = (i * angle * Math.PI) / 180;
+    pts.push({ x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta) });
+  }
+  return pts;
+}
+
+function generateGrid(n, cx, cy, maxR) {
+  const pts = [];
+  const spacing = maxR * 2 / Math.ceil(Math.sqrt(n * 4 / Math.PI));
+  const cols = Math.ceil(maxR * 2 / spacing);
+  let count = 0;
+  for (let row = -cols; row <= cols && count < n; row++) {
+    for (let col = -cols; col <= cols && count < n; col++) {
+      const x = cx + col * spacing;
+      const y = cy + row * spacing;
+      const d = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      if (d < maxR) { pts.push({ x, y }); count++; }
+    }
+  }
+  return pts;
+}
+
+function generateHex(n, cx, cy, maxR) {
+  const pts = [];
+  const spacing = maxR * 2 / Math.ceil(Math.sqrt(n * 4 / Math.PI));
+  const cols = Math.ceil(maxR * 2 / spacing);
+  let count = 0;
+  for (let row = -cols; row <= cols && count < n; row++) {
+    for (let col = -cols; col <= cols && count < n; col++) {
+      const x = cx + col * spacing + (row % 2) * spacing / 2;
+      const y = cy + row * spacing * 0.866;
+      const d = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+      if (d < maxR) { pts.push({ x, y }); count++; }
+    }
+  }
+  return pts;
+}
+
+function generateRandom(n, cx, cy, maxR) {
+  const pts = [];
+  let tries = 0;
+  while (pts.length < n && tries < n * 20) {
+    const r = maxR * Math.sqrt(Math.random());
+    const theta = Math.random() * Math.PI * 2;
+    pts.push({ x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta) });
+    tries++;
+  }
+  return pts;
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────
+function computeStats(pts, r, cx, cy, maxR) {
+  if (pts.length === 0) return {};
+  
+  // Coverage = area of panels / total circle area
+  const panelArea = Math.PI * r * r;
+  const totalArea = Math.PI * maxR * maxR;
+  const coverage = Math.min(1, (pts.length * panelArea) / totalArea);
+  
+  // Min distance
+  let minDist = Infinity;
+  const sample = pts.slice(0, Math.min(100, pts.length));
+  for (let i = 0; i < sample.length; i++) {
+    for (let j = i + 1; j < sample.length; j++) {
+      const d = Math.sqrt((sample[i].x - sample[j].x) ** 2 + (sample[i].y - sample[j].y) ** 2);
+      if (d < minDist) minDist = d;
+    }
+  }
+  
+  // Overlap count (simplified)
+  let overlaps = 0;
+  for (let i = 0; i < sample.length; i++) {
+    for (let j = i + 1; j < sample.length; j++) {
+      const d = Math.sqrt((sample[i].x - sample[j].x) ** 2 + (sample[i].y - sample[j].y) ** 2);
+      if (d < r * 2) overlaps++;
+    }
+  }
+  const overlapRate = overlaps / (sample.length * (sample.length - 1) / 2);
+  
+  // Efficiency: coverage normalized by overlap penalty
+  const efficiency = coverage * (1 - overlapRate * 0.5);
+  
+  return { coverage, minDist, overlapRate, efficiency };
+}
+
+// ── Draw functions ─────────────────────────────────────────────────────────
+function drawSolar(pts, r, cx, cy, maxR, angle) {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // BG
+  ctx.fillStyle = '#0a0e0f';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines (subtle)
+  ctx.strokeStyle = 'rgba(30,42,46,0.6)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Circle boundary
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+  grad.addColorStop(0, 'rgba(200,169,110,0.03)');
+  grad.addColorStop(1, 'rgba(200,169,110,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(200,169,110,0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 8]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Panels
+  pts.forEach((p, i) => {
+    const t = i / pts.length;
+    
+    // Glow
+    const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2);
+    glow.addColorStop(0, 'rgba(78,205,196,0.12)');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Panel body
+    const hue = 200 + t * 40;
+    ctx.fillStyle = `hsl(${hue}, 60%, ${18 + t * 8}%)`;
+    ctx.strokeStyle = `hsl(${hue}, 80%, 45%)`;
+    ctx.lineWidth = 0.8;
+    
+    // Square panel with rounded corners
+    const s = r * 1.5;
+    ctx.beginPath();
+    ctx.roundRect(p.x - s/2, p.y - s/2, s, s, s * 0.15);
+    ctx.fill();
+    ctx.stroke();
+
+    // Solar cell grid lines
+    ctx.strokeStyle = `hsla(${hue}, 60%, 55%, 0.4)`;
+    ctx.lineWidth = 0.3;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y - s/2); ctx.lineTo(p.x, p.y + s/2);
+    ctx.moveTo(p.x - s/2, p.y); ctx.lineTo(p.x + s/2, p.y);
+    ctx.stroke();
+  });
+
+  // Center point
+  ctx.fillStyle = 'rgba(200,169,110,0.6)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Labels
+  ctx.font = '10px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(107,122,125,0.8)';
+  ctx.fillText(`n=${pts.length} paneles · α=${angle.toFixed(3)}°`, cx - maxR + 10, cy + maxR - 10);
+}
+
+function drawSequence() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0a0e0f';
+  ctx.fillRect(0, 0, W, H);
+
+  const seq = knacciSequence(k, 25);
+  const maxVal = seq[seq.length - 1];
+  const barW = (W - 60) / seq.length;
+  const maxH = H - 80;
+
+  // Title
+  ctx.font = '11px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(200,169,110,0.8)';
+  ctx.fillText(`Secuencia ${k}-nacci · primeros ${seq.length} términos`, 30, 30);
+
+  seq.forEach((v, i) => {
+    const barH = (v / maxVal) * maxH;
+    const x = 30 + i * barW;
+    const y = H - 50 - barH;
+    const t = i / seq.length;
+    
+    const g = ctx.createLinearGradient(x, y, x, H - 50);
+    g.addColorStop(0, `hsl(${180 + t * 60}, 70%, 55%)`);
+    g.addColorStop(1, `hsl(${180 + t * 60}, 70%, 25%)`);
+    
+    ctx.fillStyle = g;
+    ctx.fillRect(x + 1, y, barW - 3, barH);
+
+    if (i < 15) {
+      ctx.font = '9px DM Mono, monospace';
+      ctx.fillStyle = 'rgba(107,122,125,0.8)';
+      ctx.fillText(v > 9999 ? '…' : v, x, H - 34);
+    }
+  });
+
+  // Ratio labels
+  ctx.font = '10px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(78,205,196,0.9)';
+  const phi = computePhi(k);
+  ctx.fillText(`φₖ = ${phi.toFixed(6)}`, 30, H - 12);
+}
+
+function drawSpiral() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0a0e0f';
+  ctx.fillRect(0, 0, W, H);
+
+  const cx = W / 2, cy = H / 2;
+  const maxR = Math.min(W, H) * 0.44;
+  const angle = knacciAngle(k);
+  const pts = generateKnacci(N, N, angle, cx, cy, maxR);
+
+  // Draw connecting spiral
+  if (pts.length > 1) {
+    ctx.strokeStyle = 'rgba(200,169,110,0.08)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    pts.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.stroke();
+  }
+
+  pts.forEach((p, i) => {
+    const t = i / pts.length;
+    const alpha = 0.5 + t * 0.5;
+    ctx.fillStyle = `hsla(${160 + t * 80}, 70%, 55%, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.font = '10px DM Mono, monospace';
+  ctx.fillStyle = 'rgba(200,169,110,0.7)';
+  ctx.fillText(`Ángulo: ${angle.toFixed(4)}° · φₖ: ${computePhi(k).toFixed(5)}`, cx - 120, 25);
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+function render() {
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const maxR = Math.min(W, H) * 0.44;
+  const phi = computePhi(k);
+  const angle = 360 / (phi * phi);
+
+  // Update UI
+  document.getElementById('kVal').textContent = k;
+  document.getElementById('nVal').textContent = N;
+  document.getElementById('rVal').textContent = R;
+  document.getElementById('phiVal').textContent = phi.toFixed(6);
+  document.getElementById('angleVal').textContent = angle.toFixed(4) + '°';
+
+  // Sequence
+  const seq = knacciSequence(k, 10);
+  const seqStr = seq.slice(0, 8).map((v, i) => i < 3 ? `<span>${v}</span>` : v).join(', ') + ', …';
+  document.getElementById('seqDisplay').innerHTML = `Secuencia: ${seqStr}`;
+
+  // Generate points for current mode
+  let pts = [];
+  if (currentTab === 'solar' || currentTab === 'spiral') {
+    if (mode === 'knacci') pts = generateKnacci(N, N, angle, cx, cy, maxR);
+    else if (mode === 'grid') pts = generateGrid(N, cx, cy, maxR);
+    else if (mode === 'hex') pts = generateHex(N, cx, cy, maxR);
+    else pts = generateRandom(N, cx, cy, maxR);
+  }
+
+  // Compute stats
+  const stats = computeStats(pts, R, cx, cy, maxR);
+  const gridPts = generateGrid(N, cx, cy, maxR);
+  const gridStats = computeStats(gridPts, R, cx, cy, maxR);
+
+  if (stats.efficiency !== undefined) {
+    const eff = (stats.efficiency * 100).toFixed(1);
+    const cov = (stats.coverage * 100).toFixed(1);
+    const ol = (stats.overlapRate * 100).toFixed(1);
+    const md = stats.minDist.toFixed(1);
+    document.getElementById('effVal').textContent = eff + '%';
+    document.getElementById('coverVal').textContent = cov + '%';
+    document.getElementById('overlapVal').textContent = ol + '%';
+    document.getElementById('minDistVal').textContent = md + 'px';
+
+    const gridEff = (gridStats.efficiency * 100).toFixed(1);
+    document.getElementById('effPct1').textContent = eff + '%';
+    document.getElementById('effPct2').textContent = gridEff + '%';
+    document.getElementById('bar1').style.width = Math.min(100, stats.efficiency * 150) + '%';
+    document.getElementById('bar2').style.width = Math.min(100, gridStats.efficiency * 150) + '%';
+  }
+
+  // Draw
+  if (currentTab === 'solar') drawSolar(pts, R, cx, cy, maxR, angle);
+  else if (currentTab === 'sequence') drawSequence();
+  else drawSpiral();
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────
+document.getElementById('kSlider').addEventListener('input', e => {
+  k = parseInt(e.target.value);
+  render();
+});
+document.getElementById('nSlider').addEventListener('input', e => {
+  N = parseInt(e.target.value);
+  render();
+});
+document.getElementById('rSlider').addEventListener('input', e => {
+  R = parseInt(e.target.value);
+  render();
+});
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btns .btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn' + m.charAt(0).toUpperCase() + m.slice(1)).classList.add('active');
+  render();
+}
+
+function setTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  render();
+}
+
+// Init
+window.addEventListener('resize', () => { resizeCanvas(); render(); });
+resizeCanvas();
+render();
+</script>
+</body>
+</html>
